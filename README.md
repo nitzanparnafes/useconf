@@ -15,14 +15,27 @@ emerge app-portage/gentoolkit
 emerge net-misc/curl
 ```
 
-##### Installation
+##### Automatic Installation
 ```
 $ git clone https://github.com/pRivat1337/useconf
 $ su
 # ./install.sh
 ```
 And you're done!
-
+##### Manual Installation
+```
+$ git clone https://github.com/pRivat1337/useconf
+$ su
+# mv useconf /usr/bin/        (or whatever folder you want)
+# cd /usr/bin
+# chown root useconf          (changing file permissions)
+# chgrp root useconf
+```
+##### Uninstalling
+```
+$ su
+# ./install.sh --uninstall
+```
 ### How to use
 
 ```
