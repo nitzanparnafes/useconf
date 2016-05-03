@@ -6,10 +6,16 @@
 
 ### How to install
 
-#### Dependencies
+##### Dependencies
 > app-portage/gentoolkit     (required for one of the options. not mandatory)  
 > net-misc/curl 
 
+```bash
+emerge app-portage/gentoolkit
+emerge net-misc/curl
+```
+
+##### Installation
 ```
 $ git clone https://github.com/pRivat1337/useconf
 $ su
