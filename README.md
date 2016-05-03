@@ -14,7 +14,7 @@ $ git clone https://github.com/pRivat1337/useconf
 $ su
 # ./install.sh
 ```
-And your done!
+And you're done!
 
 ### How to use
 
