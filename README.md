@@ -7,7 +7,7 @@
 ### How to install
 
 #### Dependencies
-> app-portage/gentoolkit     (required for one of the options. not mandatory)
+> app-portage/gentoolkit     (required for one of the options. not mandatory)  
 > net-misc/curl 
 
 ```
