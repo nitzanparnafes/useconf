@@ -1,7 +1,7 @@
 # useconf
 
 
-###Edit and update USE flags for packages in gentoo
+###Easily edit and update USE flags for individual packages in gentoo
 ====
 
 ### How to install
