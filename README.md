@@ -11,8 +11,8 @@
 > net-misc/curl 
 
 ```bash
-#emerge app-portage/gentoolkit
-#emerge net-misc/curl
+\#emerge app-portage/gentoolkit
+\#emerge net-misc/curl
 ```
 
 ##### Installation
