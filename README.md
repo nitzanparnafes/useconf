@@ -7,7 +7,7 @@
 ### How to install
 
 #### Dependencies
-> gentoolkit
+> app-portage/gentoolkit (required for one of the options. not mandatory)
 
 ```
 $ git clone https://github.com/pRivat1337/useconf
