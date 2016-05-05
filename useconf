@@ -56,10 +56,16 @@ gethelp() {
    echo "-o, --override		Overrides existing file"
    echo "-h, --help		Display this screen and exit"
    echo "-u, --use		Display available useflags for the package (requires app-portage/gentoolkit) and exit"
+   echo "-l, --list		Print existing package use flag configuration files and exit"
    echo ""
    exit 0
 }
-
+listpkgs() {
+   echo "Existing package use flag configuration files:"
+   echo ""
+   ls "/etc/portage/package.use/"
+   exit 0
+}
 printuse() {
    if [[ $PKGNAME == -* ]]; then
       echo "No package specified!"
@@ -78,6 +84,7 @@ getinput() {
 	    -o|--override) OVERRIDE=1;;
 	    -h|--help) gethelp;;
 	    -u|--use) printuse;;
+	    -l|--list) listpkgs;;
 	    *)
 	       echo "Unknown parameter $i !!"
 	       gethelp
