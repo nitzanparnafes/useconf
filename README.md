@@ -1,18 +1,41 @@
 # useconf
+
+
+###Easily edit and update USE flags for individual packages in Gentoo
 ====
 
 ### How to install
 
-#### Dependencies
-> gentoolkit
+##### Dependencies
+> app-portage/gentoolkit     (required for one of the options. not mandatory)  
+> net-misc/curl 
 
+```bash
+emerge app-portage/gentoolkit
+emerge net-misc/curl
+```
+
+##### Automatic Installation
 ```
 $ git clone https://github.com/pRivat1337/useconf
 $ su
 # ./install.sh
 ```
-And your done!
-
+And you're done!
+##### Manual Installation
+```
+$ git clone https://github.com/pRivat1337/useconf
+$ su
+# mv useconf /usr/bin/        (or whatever folder you want)
+# cd /usr/bin
+# chown root useconf          (changing file permissions)
+# chgrp root useconf
+```
+##### Uninstalling
+```
+$ su
+# ./install.sh --uninstall
+```
 ### How to use
 
 ```
