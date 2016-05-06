@@ -1,13 +1,25 @@
 #!/bin/bash
+# Manage your USE flags for individual packages in Gentoo with ease
+#
+########################################################################
+# U     U   SSSSSSS   EEEEEEE   CCCCCCC   OOOOOOO   NN    N   F F F F  #
+# U     U   S         E	        C         O     O   N N   N   F        #
+# U     U   SSSSSSS   EEEEEEE   C         O     O   N  N  N   F F      #
+# U     U         S   E	        C         O     O   N   N N   F        #
+# UUUUUUU   SSSSSSS   EEEEEEE   CCCCCCC   OOOOOOO   N    NN   F        #
+########################################################################
 
+# Variables
 PKGNAME="${@: -1}"
 OVERRIDE=0
 EQUERY=1
 
+# Check if app-portage/gentoolkit is installed
 if [ -z "ls -d /var/db/pkg/*/* | grep gentoolkit" ]; then
    EQUERY=0
 fi
 
+# Main function
 main() {
    checkifroot
    getinput "$@"
@@ -30,6 +42,7 @@ main() {
 
 }
 
+# Checks if the script is run as root
 checkifroot() {
    if [[ `echo $EUID` -ne 0 ]]; then
       echo ""
@@ -39,6 +52,7 @@ checkifroot() {
    fi
 }
 
+# Gets package's "full name"
 getpkg() {
    PKGGRP=`find /usr/portage/ -name "$PKGNAME" -type d -not -path "*/distfiles*" -not -path "*/packages*" -not -path "*/profiles*" | cut -d'/' -f4-5`
    if [ -z $PKGGRP ]; then
@@ -51,6 +65,7 @@ getpkg() {
    echo "$PKGGRP"
 }
 
+# Prints help screen
 gethelp() {
    echo "Usage: useconf [OPTIONS] [INPUT]..."
    echo "Edit useflags for a specific package. [INPUT] == package name"
@@ -67,12 +82,16 @@ gethelp() {
    echo ""
    exit 0
 }
+
+# List use flag conf files
 listpkgs() {
    echo "Existing package use flag configuration files:"
    echo ""
    ls "/etc/portage/package.use/"
    exit 0
 }
+
+# Remove use flag conf file
 rmconf() {
    echo "Are you sure you want to remove the configuration file?"
    echo "/etc/portage/package.use/$PKGNAME"
@@ -84,6 +103,8 @@ rmconf() {
    fi
    exit 0
 }
+
+# Prints available useflags for the package
 printuse() {
    if [[ $PKGNAME == -* ]]; then
       echo "No package specified!"
@@ -94,6 +115,8 @@ printuse() {
    fi
    exit 0
 }
+
+# Prints available useflags for the package using a different method
 printusenoeq() {
    if [[ $PKGNAME == -* ]]; then
       echo "No package specified!"
@@ -112,6 +135,8 @@ printusenoeq() {
    fi
    exit 0
 }    
+
+# Interprets user input
 getinput() {
    if [ $EQUERY -eq 1 ]; then 
    for i in $@; do
@@ -155,6 +180,6 @@ getinput() {
    fi
 }
 
-   
+# Run the program
 main "$@"
 
