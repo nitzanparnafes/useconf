@@ -1,7 +1,15 @@
 # useconf
 
 
-###Easily edit and update USE flags for individual packages in Gentoo
+###Manage your USE flags for individual packages in Gentoo with ease
+#####What is this program?
+With ```useconf``` you can easliy update, edit and remove individual USE flag configuration files that are located in  
+```
+/etc/portage/package.use/
+```
+This program will automatically create the conf file so you will only need to add the use flags themselves (which the program can display).  
+This program let you edit existing conf files without having to write the whole path to them.  
+
 ====
 
 ### How to install
