@@ -2,6 +2,11 @@
 
 PKGNAME="${@: -1}"
 OVERRIDE=0
+EQUERY=1
+
+if [ -z "ls -d /var/db/pkg/*/* | grep gentoolkit" ]; then
+   EQUERY=0
+fi
 
 main() {
    checkifroot
@@ -34,18 +39,30 @@ checkifroot() {
    fi
 }
 
+#getpkg() {
+#   if [ `emerge --search $PKGNAME | tail -2 | head -1 | rev | cut -c 2- | rev | cut -d':' -f2 | cut -d' ' -f2` -ne 0 ]; then
+#      if [ -z `curl -s https://packages.gentoo.org/packages/search?q=$1 | sed '95q;d' | rev | cut -c 3- | rev | cut -d '/' -f3-4` ]; then
+#         echo `curl -s https://packages.gentoo.org/packages/search?q=$1 | cut -d'/' -f5-6 | cut -d'"' -f1`
+#      else
+#         echo `curl -s https://packages.gentoo.org/packages/search?q=$1 | sed '95q;d' | rev | cut -c 3- | rev | cut -d '/' -f3-4`
+#      fi
+#   else
+#      echo "Package not found!"
+#      echo "The script works only with official gentoo packages (no overlays)"
+#      exit 0
+#   fi
+#}
+
 getpkg() {
-   if [ `emerge --search $PKGNAME | tail -2 | head -1 | rev | cut -c 2- | rev | cut -d':' -f2 | cut -d' ' -f2` -ne 0 ]; then
-      if [ -z `curl -s https://packages.gentoo.org/packages/search?q=$1 | sed '95q;d' | rev | cut -c 3- | rev | cut -d '/' -f3-4` ]; then
-         echo `curl -s https://packages.gentoo.org/packages/search?q=$1 | cut -d'/' -f5-6 | cut -d'"' -f1`
-      else
-         echo `curl -s https://packages.gentoo.org/packages/search?q=$1 | sed '95q;d' | rev | cut -c 3- | rev | cut -d '/' -f3-4`
+   PKGGRP=`find /usr/portage/ -name "$PKGNAME" -type d -not -path "*/distfiles*" -not -path "*/packages*" -not -path "*/profiles*" | cut -d'/' -f4-5`
+   if [ -z $PKGGRP ]; then
+      if [ -z `find /var/lib/layman/ -name "$PKGNAME" -type d -not -path "*/.hg*" -not -path "*/profiles*"` ]; then
+         echo "Package not found!"
+	 exit 0
       fi
-   else
-      echo "Package not found!"
-      echo "The script works only with official gentoo packages (no overlays)"
-      exit 0
+      echo `find /var/lib/layman/ -name "$PKGNAME" -type d -not -path "*/.hg*" -not -path "*/profiles*" | sed '1q;d' | cut -d'/' -f6-7`
    fi
+   echo "$PKGGRP"
 }
 
 gethelp() {
@@ -57,6 +74,7 @@ gethelp() {
    echo "-h, --help		Display this screen and exit"
    echo "-u, --use		Display available useflags for the package (requires app-portage/gentoolkit) and exit"
    echo "-l, --list		Print existing package use flag configuration files and exit"
+   echo "-r, --remove		Remove existing package use flag configuration file and exit"
    echo ""
    exit 0
 }
@@ -64,6 +82,17 @@ listpkgs() {
    echo "Existing package use flag configuration files:"
    echo ""
    ls "/etc/portage/package.use/"
+   exit 0
+}
+rmconf() {
+   echo "Are you sure you want to remove the configuration file?"
+   echo "/etc/portage/package.use/$PKGNAME"
+   echo "(y/n)"
+   read answer
+   if echo "$answer" | grep -iq "^y" ;then
+      rm /etc/portage/package.use/$PKGNAME
+      echo "file removed"
+   fi
    exit 0
 }
 printuse() {
@@ -76,8 +105,26 @@ printuse() {
    fi
    exit 0
 }
-
+printusenoeq() {
+   if [[ $PKGNAME == -* ]]; then
+      echo "No package specified!"
+   elif [ -z `find /usr/portage/ -name "$PKGNAME" -type d -not -path "*/distfiles*" -not -path "*/packages*" -not -path "*/profiles*" | cut -d'/' -f4-5` ] && [ -z `find /var/lib/layman/ -name "$PKGNAME" -type d -not -path "*/.hg*" -not -path "*/profiles*" | sed '1q;d' | cut -d'/' -f6-7` ]; then
+      echo "Package not found!"
+      echo "Aborting.."
+   else 
+      echo "Available useflags for $PKGNAME :"
+      echo ""
+      if [ -z `find /usr/portage/ -name "$PKGNAME" -type d -not -path "*/distfiles*" -not -path "*/packages*" -not -path "*/profiles*" | cut -d'/' -f4-5` ]; then
+         PKGNAMELONG=`find /var/lib/layman/ -name "$PKGNAME" -type d -not -path "*/.hg*" | sed '1q;d' | cut -d'/' -f5-7`
+	 grep IUSE /var/lib/layman/$PKGNAMELONG/*.ebuild | cut -d'"' -f2 | tr " " "\n" | sort | uniq 
+      else
+         grep IUSE /usr/portage/$(getpkg $PKGNAME)/*.ebuild | cut -d'"' -f2 | tr " " "\n" | sort | uniq 
+      fi
+   fi
+   exit 0
+}    
 getinput() {
+   if [ $EQUERY -eq 1 ]; then 
    for i in $@; do
       if [[ $i == -* ]]; then
          case "$i" in
@@ -85,6 +132,7 @@ getinput() {
 	    -h|--help) gethelp;;
 	    -u|--use) printuse;;
 	    -l|--list) listpkgs;;
+	    -r|--remove) rmconf;;
 	    *)
 	       echo "Unknown parameter $i !!"
 	       gethelp
@@ -95,7 +143,27 @@ getinput() {
          return 0
       fi
    done       
+   else
+   for i in $@; do
+      if [[ $i == -* ]]; then
+         case "$i" in
+	    -o|--override) OVERRIDE=1;;
+	    -h|--help) gethelp;;
+	    -u|--use) printusenoeq;;
+	    -l|--list) listpkgs;;
+	    -r|--remove) rmconf;;
+	    *)
+	       echo "Unknown parameter $i !!"
+	       gethelp
+	       ;;
+	  esac
+       fi
+       if [ ${i+1} == NULL ]; then																		         return 0
+       fi
+       done
+   fi
 }
 
    
 main "$@"
+
