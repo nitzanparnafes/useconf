@@ -158,7 +158,8 @@ getinput() {
 	       ;;
 	  esac
        fi
-       if [ ${i+1} == NULL ]; then																		         return 0
+       if [ ${i+1} == NULL ]; then																		         
+          return 0
        fi
        done
    fi
