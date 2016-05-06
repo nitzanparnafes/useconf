@@ -39,20 +39,6 @@ checkifroot() {
    fi
 }
 
-#getpkg() {
-#   if [ `emerge --search $PKGNAME | tail -2 | head -1 | rev | cut -c 2- | rev | cut -d':' -f2 | cut -d' ' -f2` -ne 0 ]; then
-#      if [ -z `curl -s https://packages.gentoo.org/packages/search?q=$1 | sed '95q;d' | rev | cut -c 3- | rev | cut -d '/' -f3-4` ]; then
-#         echo `curl -s https://packages.gentoo.org/packages/search?q=$1 | cut -d'/' -f5-6 | cut -d'"' -f1`
-#      else
-#         echo `curl -s https://packages.gentoo.org/packages/search?q=$1 | sed '95q;d' | rev | cut -c 3- | rev | cut -d '/' -f3-4`
-#      fi
-#   else
-#      echo "Package not found!"
-#      echo "The script works only with official gentoo packages (no overlays)"
-#      exit 0
-#   fi
-#}
-
 getpkg() {
    PKGGRP=`find /usr/portage/ -name "$PKGNAME" -type d -not -path "*/distfiles*" -not -path "*/packages*" -not -path "*/profiles*" | cut -d'/' -f4-5`
    if [ -z $PKGGRP ]; then
@@ -72,9 +58,12 @@ gethelp() {
    echo "Options:"
    echo "-o, --override		Overrides existing file"
    echo "-h, --help		Display this screen and exit"
-   echo "-u, --use		Display available useflags for the package (requires app-portage/gentoolkit) and exit"
+   echo "-u, --use		Display available useflags for the package and exit"
    echo "-l, --list		Print existing package use flag configuration files and exit"
    echo "-r, --remove		Remove existing package use flag configuration file and exit"
+   if [ $EQUERY -eq 1 ]; then
+      echo "-e, --usedefault	Display available useflags for the package (without using gentoolkit) and exit"
+   fi
    echo ""
    exit 0
 }
@@ -130,6 +119,7 @@ getinput() {
          case "$i" in
 	    -o|--override) OVERRIDE=1;;
 	    -h|--help) gethelp;;
+	    -e|--usedefault) printusenoeq;;
 	    -u|--use) printuse;;
 	    -l|--list) listpkgs;;
 	    -r|--remove) rmconf;;
