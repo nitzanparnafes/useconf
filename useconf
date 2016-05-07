@@ -1,0 +1,205 @@
+#!/bin/bash
+# Manage your USE flags for individual packages in Gentoo with ease
+#
+########################################################################
+# U     U   SSSSSSS   EEEEEEE   CCCCCCC   OOOOOOO   NN    N   F F F F  #
+# U     U   S         E	        C         O     O   N N   N   F        #
+# U     U   SSSSSSS   EEEEEEE   C         O     O   N  N  N   F F      #
+# U     U         S   E	        C         O     O   N   N N   F        #
+# UUUUUUU   SSSSSSS   EEEEEEE   CCCCCCC   OOOOOOO   N    NN   F        #
+########################################################################
+
+# Variables
+PKGNAME="${@: -1}"
+OVERRIDE=0
+EQUERY=1
+
+
+# Check if app-portage/gentoolkit is installed
+if [ -z "ls -d /var/db/pkg/*/* | grep -Ei gentoolkit | grep -Eiv gentoolkit-dev" ]; then
+   EQUERY=0
+fi
+
+# Main function
+main() {
+   checkifroot
+   getinput "$@"
+   
+   if [ $# -eq 0 ] || [[ $PKGNAME == -* ]]; then
+      echo "No arguments provided!"
+      echo "Program will display help message and exit"
+      echo ""
+      gethelp
+   fi
+
+   if [ -a /etc/portage/package.use/$PKGNAME ] && [ $OVERRIDE -ne 1 ]; then
+      $EDITOR /etc/portage/package.use/$PKGNAME
+   else
+      echo $(getpkg $PKGNAME) > /etc/portage/package.use/$PKGNAME
+      $EDITOR /etc/portage/package.use/$PKGNAME
+   fi
+
+   exit 0
+
+}
+
+# Checks if the script is run as root
+checkifroot() {
+   if [[ `echo $EUID` -ne 0 ]]; then
+      echo ""
+      echo "This script must be run as root!!"
+      echo ""
+      exit 0
+   fi
+}
+
+# Gets package's "full name"
+getpkg() { 
+   # Check if package is unique
+   if checkerr; then
+      tmpfile=$(mktemp)
+      portageq best_visible / ${PKGNAME} &>> $tmpfile
+      if [ ! -s $tmpfile ]; then
+         rm $tmpfile
+         echo "Package not found!"
+	 exit 0
+      fi
+      PKGLIST=`cat $tmpfile | tail -n+2 | head -n-2 | sed 's/^..//' | tr " " "\n"`
+      PKGGRP="# There are at least one package that $PKGFILE is its name. Please choose from the list your choice: $PKGLIST"
+      rm $tmpfile
+   else
+      PKGFULL=$(portageq best_visible / ${PKGNAME}) 
+      PKGGRP=$(echo ${PKGFULL} | sed -e 's:\(.*\).*-[0-9].*:\1:')
+   fi
+   echo "$PKGGRP"
+}
+
+# Catch portageq exit status
+checkerr() {
+   portageq best_visible / ${PKGNAME} > /dev/null 2>&1 
+   local status=$?
+   if [ $status -eq 1 ]; then
+      return 0
+   fi
+   return 1
+}
+
+
+   
+# Prints help screen
+gethelp() {
+   echo "Usage: useconf [OPTIONS] [INPUT]..."
+   echo "Edit useflags for a specific package. [INPUT] == package name"
+   echo ""
+   echo "Options:"
+   echo "-o, --override		Overrides existing file"
+   echo "-h, --help		Display this screen and exit"
+   echo "-u, --use		Display available useflags for the package and exit"
+   echo "-l, --list		Print existing package use flag configuration files and exit"
+   echo "-r, --remove		Remove existing package use flag configuration file and exit"
+   if [ $EQUERY -eq 1 ]; then
+      echo "-e, --usedefault	Display available useflags for the package (without using gentoolkit) and exit (not recommended)"
+   fi
+   echo ""
+   exit 0
+}
+
+# List use flag conf files
+listpkgs() {
+   echo "Existing package use flag configuration files:"
+   echo ""
+   ls "/etc/portage/package.use/"
+   exit 0
+}
+
+# Remove use flag conf file
+rmconf() {
+   if [ ! -f /etc/portage/package.use/$PKGNAME ]; then
+      echo "File does not exist!"
+      echo "Aborting.."
+      exit 0
+   fi
+   echo "Are you sure you want to remove the configuration file?"
+   echo "/etc/portage/package.use/$PKGNAME (y/n)"
+   read answer
+   if echo "$answer" | grep -iq "^y" ;then
+      rm /etc/portage/package.use/$PKGNAME
+      echo "file removed"
+   fi
+   exit 0
+}
+
+# Prints available useflags for the package
+printuse() {
+   if [[ $PKGNAME == -* ]]; then
+      echo "No package specified!"
+   else
+      echo "Available useflags for package $PKGNAME :"
+      echo ""
+      equery u $PKGNAME
+   fi
+   exit 0
+}
+
+# Prints available useflags for the package using a different method 
+printusenoeq() {
+   if [[ $PKGNAME == -* ]]; then
+      echo "No package specified!"
+   elif [ $(getpkg $PKGNAME) == *"#"* ]; then
+      echo "Package not found!"
+      echo "Aborting.."
+   else
+      echo "Available useflags for $PKGNAME :"
+      echo ""
+      echo "$(portageq metadata / ebuild $(portageq best_visible / $PKGNAME) IUSE | sort | uniq| tr " " "\n" | sed '/^linguas/ d' | sed '/^abi_/ d')"
+   fi
+   exit 0
+}
+
+# Interprets user input
+getinput() {
+   if [ $EQUERY -eq 1 ]; then 
+   for i in $@; do
+      if [[ $i == -* ]]; then
+         case "$i" in
+	    -o|--override) OVERRIDE=1;;
+	    -h|--help) gethelp;;
+	    -e|--usedefault) printusenoeq;;
+	    -u|--use) printuse;;
+	    -l|--list) listpkgs;;
+	    -r|--remove) rmconf;;
+	    *)
+	       echo "Unknown parameter $i !!"
+	       gethelp
+	       ;;
+	 esac
+      fi
+      if [ ${i+1} == NULL ]; then
+         return 0
+      fi
+   done       
+   else
+   for i in $@; do
+      if [[ $i == -* ]]; then
+         case "$i" in
+	    -o|--override) OVERRIDE=1;;
+	    -h|--help) gethelp;;
+	    -u|--use) printusenoeq;;
+	    -l|--list) listpkgs;;
+	    -r|--remove) rmconf;;
+	    *)
+	       echo "Unknown parameter $i !!"
+	       gethelp
+	       ;;
+	  esac
+       fi
+       if [ ${i+1} == NULL ]; then																		         
+          return 0
+       fi
+       done
+   fi
+}
+
+# Run the program
+main "$@"
+
